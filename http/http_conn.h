@@ -57,7 +57,8 @@ public:
         BAD_REQUEST,
         NO_RESOURCE,
         FORBIDDEN_REQUEST,
-        INITENAL_ERROR,
+        FILE_REQUEST,
+        INTERNAL_ERROR,
         CLOSED_CONNECTION
     };
     enum LINE_STATUS

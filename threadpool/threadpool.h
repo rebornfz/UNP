@@ -21,13 +21,13 @@ private:
     int m_max_requests;
     pthread_t *m_threads;//定义线程
     std::list<T *> m_workqueue;
-    locker m_queuelocker;
-    sem m_queuestat;
+    locker m_queuelocker;//锁
+    sem m_queuestat;//信号量
     connection_pool *m_connPool;//数据库
     int m_actor_model;
 
     static void *worker(void *arg);
-    void run;
+    void run();
 };
 
 template <typename T>
@@ -52,13 +52,19 @@ threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int threa
 }
 
 template <typename T>
+threadpool<T>::~threadpool()
+{
+    delete[] m_threads;
+}
+
+template <typename T>
 bool threadpool<T>::append(T *request, int state){
     m_queuelocker.lock();
     if(m_workqueue.size() >= m_max_requests){
         m_queuelocker.unlock();
         return false;
     }
-    request->m_state = state;//m_state是啥？
+    request->m_state = state;//读或写
     m_workqueue.push_back(request);
     m_queuelocker.unlock();
     m_queuestat.post();

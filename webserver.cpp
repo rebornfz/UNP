@@ -47,6 +47,33 @@ void WebServer::init(int port, string user, string passWord, string databaseName
     m_actormodel = actor_model;
 }
 
+void WebServer::trig_mode()
+{
+    //LT + LT
+    if (0 == m_TRIGMode)
+    {
+        m_LISTENTrigmode = 0;
+        m_CONNTrigmode = 0;
+    }
+    //LT + ET
+    else if (1 == m_TRIGMode)
+    {
+        m_LISTENTrigmode = 0;
+        m_CONNTrigmode = 1;
+    }
+    //ET + LT
+    else if (2 == m_TRIGMode)
+    {
+        m_LISTENTrigmode = 1;
+        m_CONNTrigmode = 0;
+    }
+    //ET + ET
+    else if (3 == m_TRIGMode)
+    {
+        m_LISTENTrigmode = 1;
+        m_CONNTrigmode = 1;
+    }
+}
 void WebServer::log_write()
 {
     if (0 == m_close_log)
@@ -64,14 +91,7 @@ void WebServer::sql_pool()
     m_connPool = connection_pool::GetInstance();
     m_connPool->init("localhost", m_user, m_passWord, m_databaseName, 3306, m_sql_num, m_close_log);
 
-    if(m_SQLVerify == 0)
-    {
-        users->initmysql_result(m_connPool);
-    }
-    else if(m_SQLVerify == 1)
-    {
-        users->initresultFile(m_connPool);
-    }
+    users->initmysql_result(m_connPool);
 }
 
 void WebServer::thread_pool()
@@ -116,7 +136,7 @@ void WebServer::eventListen()
     Utils::u_pipefd = m_pipefd;
     Utils::u_epollfd = m_epollfd;
 
-    utils.init(timer_lst, TIMESLOT);
+    utils.init(TIMESLOT);
 
     //epoll创建内核事件表
     epoll_event events[MAX_EVENT_NUMBER];
@@ -129,7 +149,7 @@ void WebServer::eventListen()
     ret = socketpair(PF_UNIX, SOCK_STREAM, 0, m_pipefd);
     assert(ret != -1);
     utils.setnonblocking(m_pipefd[1]);
-    utils.addfd(m_epollfd, m_pipefd[0], false, m_TRIGMode);
+    utils.addfd(m_epollfd, m_pipefd[0], false, 0);
 
     utils.addsig(SIGPIPE, SIG_IGN);
     utils.addsig(SIGALRM, utils.sig_handler, false);
@@ -391,7 +411,7 @@ void WebServer::eventLoop()
             {
                 bool flag = dealwithsignal(timeout, stop_server);
                 if (false == flag)
-                    continue;
+                    LOG_ERROR("%s", "dealclientdata failure");
             }
             //处理客户连接上接收到的数据
             else if (events[i].events & EPOLLIN)

@@ -75,7 +75,7 @@ public:
     void process();
     bool read_once();
     bool write();
-    sockaddr_in *get_addresss()
+    sockaddr_in *get_address()
     {
         return &m_address;
     }

@@ -107,11 +107,11 @@ int connection_pool::GetFreeConn(){
 }
 
 connection_pool::~connection_pool(){
-    DestoryPool();
+    DestroyPool();
 }
 
 //RAII是Resource Acquisition Is Initialization（wiki上面翻译成 “资源获取就是初始化”）的简称，是C++语言的一种管理资源、避免泄漏的惯用法。利用的就是C++构造的对象最终会被销毁的原则。RAII的做法是使用一个对象，在其构造时获取对应的资源，在对象生命期内控制对资源的访问，使之始终保持有效，最后在对象析构的时候，释放构造时获取的资源。
-connectionRAII::connectionRAII(MYSQL **SQL, connection_poll *connPool){
+connectionRAII::connectionRAII(MYSQL **SQL, connection_pool *connPool){
     *SQL = connPool->GetConnection();
 
     conRAII = *SQL;

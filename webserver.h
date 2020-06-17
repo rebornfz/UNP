@@ -33,10 +33,6 @@ public:
     void sql_pool();
     void log_write();
 
-    void thread_pool();
-    void sql_pool();
-    void log_write();
-
     void eventListen();
     void eventLoop();
     void timer(int connfd, struct sockaddr_in client_address);

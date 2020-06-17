@@ -15,9 +15,10 @@ connection_pool::connection_pool(){
     m_FreeConn = 0;
 }
 
-connection_pool *connection_pool::GetInstance(){
-    static connection_pool connPool;
-    return $connPool;
+connection_pool *connection_pool::GetInstance()
+{
+	static connection_pool connPool;
+	return &connPool;
 }
 
 void connection_pool::init(string url, string User, string PassWord, string DBName, int Port, int MaxConn, int close_log){
@@ -89,7 +90,7 @@ bool connection_pool::ReleaseConnection(MYSQL *con){
 
 void connection_pool::DestroyPool(){
     lock.lock();
-    if(connList > 0){
+    if(connList.size() > 0){
         list<MYSQL *>::iterator it;
         for(it = connList.begin(); it != connList.end(); it++){
             MYSQL *con = *it;

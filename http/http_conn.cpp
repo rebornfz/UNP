@@ -116,7 +116,7 @@ void http_conn::close_conn(bool real_close)
 }
 
 //初始化连接,外部调用初始化套接字地址
-void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int SQLVerify, int TRIGMode,
+void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int TRIGMode,
                      int close_log, string user, string passwd, string sqlname)
 {
     m_sockfd = sockfd;
@@ -320,7 +320,7 @@ http_conn::HTTP_CODE http_conn::parse_headers(char *text)
     else if(strncasecmp(text, "Connection:", 11) == 0)
     {
         text += 11;
-        text += strspn(text. " \t");
+        text += strspn(text, " \t");
         if(strcasecmp(text, "Keep-alive") == 0)
         {
             m_linger = true;

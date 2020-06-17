@@ -26,9 +26,9 @@ public:
     int GetFreeConn();
     void DestroyPool();
 
-    static connection_pool *GetInstance(string url, string User, string PassWord, string DataBaseName, int Port, int MaxConn, int close_log);
+    static connection_pool *GetInstance();
 
-    void init();
+	void init(string url, string User, string PassWord, string DataBaseName, int Port, int MaxConn, int close_log); 
 
 private:
     connection_pool();

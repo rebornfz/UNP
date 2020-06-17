@@ -91,7 +91,7 @@ private:
     bool process_write(HTTP_CODE ret);
     HTTP_CODE parse_request_line(char *text);
     HTTP_CODE parse_headers(char *text);
-    HTTP_CODE pares_content(char *text);
+    HTTP_CODE parse_content(char *text);
     HTTP_CODE do_request();
     char *get_line() {return m_read_buf + m_start_line;}
     LINE_STATUS parse_line();

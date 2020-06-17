@@ -30,7 +30,7 @@ WebServer::~WebServer()
     delete m_pool;
 }
 
-void WebServer::init(int port, string user, string passWord, string databaseName, int log_write, int sqlverify,
+void WebServer::init(int port, string user, string passWord, string databaseName, int log_write, 
                      int opt_linger, int trigmode, int sql_num, int thread_num, int close_log, int actor_model)
 {
     m_port = port;
@@ -88,6 +88,7 @@ void WebServer::log_write()
 
 void WebServer::sql_pool()
 {
+    //m_connPool = connection_pool::GetInstance();
     m_connPool = connection_pool::GetInstance();
     m_connPool->init("localhost", m_user, m_passWord, m_databaseName, 3306, m_sql_num, m_close_log);
 
@@ -160,7 +161,7 @@ void WebServer::eventListen()
 
 void WebServer::timer(int connfd, struct sockaddr_in client_address)
 {
-    users[connfd].init(connfd, client_address, m_root, m_SQLVerify, m_TRIGMode, m_close_log, m_user, m_passWord, m_databaseName);
+    users[connfd].init(connfd, client_address, m_root, m_TRIGMode, m_close_log, m_user, m_passWord, m_databaseName);
 
     //初始化client_data数据
     //创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中

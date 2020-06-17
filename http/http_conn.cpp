@@ -83,7 +83,7 @@ int setnonblocking(int fd)
 
 void removefd(int epollfd, int fd)
 {
-    epoll_ctl(epolled, EPOLL_CTL_DEL, fd, 0);
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
     close(fd);
 }
 //将事件重置为EPOLLONESHOT

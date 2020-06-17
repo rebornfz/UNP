@@ -145,6 +145,6 @@ private:
     char sql_user[100];
     char sql_passwd[100];
     char sql_name[100];
-}
+};
 
 #endif

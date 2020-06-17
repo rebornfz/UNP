@@ -306,7 +306,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
 }
 
 //解析http请求的一个头部信息
-http_conn::HTTP_CODE http_conn::parse_headers(cha *text)
+http_conn::HTTP_CODE http_conn::parse_headers(char *text)
 {
     if(text[0] = '\0')
     {
@@ -361,7 +361,7 @@ http_conn::HTTP_CODE http_conn::parse_content(char *text)
 http_conn::HTTP_CODE http_conn::process_read()
 {
     LINE_STATUS line_status = LINE_OK;
-    HTTP_CODE res = NO_REQUEST;
+    HTTP_CODE ret = NO_REQUEST;
     char *text = 0;
 
     while((m_check_state == CHECK_STATE_CONTENT && line_status == LINE_OK) || ((line_status = parse_line()) == LINE_OK))
@@ -373,7 +373,7 @@ http_conn::HTTP_CODE http_conn::process_read()
         {
         case CHECK_STATE_REQUESTLINE:
         {
-            ret = prase_request_line(text);
+            ret = parse_request_line(text);
             if(ret == BAD_REQUEST)
             {
                 return BAD_REQUEST;

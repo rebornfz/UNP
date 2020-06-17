@@ -30,7 +30,7 @@ struct client_data{
     sockaddr_in address;
     int sockfd;
     util_timer *timer;
-}
+};
 
 class util_timer{
 public:
@@ -59,7 +59,7 @@ private:
 
     util_timer *head;
     util_timer *tail;
-}
+};
 
 class Utils{
 public:
@@ -87,7 +87,7 @@ public:
     static int u_epollfd;
     int m_TIMESLOT;
 
-}
+};
 
 void cb_func(client_data *user_data);
 

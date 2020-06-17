@@ -35,7 +35,7 @@ threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int threa
     if(thread_number <= 0 || max_requests <= 0){
         throw std::exception();
     }
-    m_thread = new pthread_t[m_thread_number];
+    m_threads = new pthread_t[m_thread_number];
     if(!m_threads){
         throw std::exception();
     }
@@ -96,7 +96,7 @@ void *threadpool<T>::worker(void *arg){
 template<typename T>
 void threadpool<T>::run(){
     while(true){
-        m_queuestate.wait();
+        m_queuestat.wait();
         m_queuelocker.lock();
         if(m_workqueue.empty()){
             m_queuelocker.unlock();
@@ -126,13 +126,13 @@ void threadpool<T>::run(){
                 }
                 else{
                     request->improv = 1;
-                    requset->timer_flag = 1;
+                    request->timer_flag = 1;
                 }
             }
-            else{
-                connectionRAII mysqlcon(&request->mysql, m_connPool);
-                request->process();
-            }
+        }
+        else{
+            connectionRAII mysqlcon(&request->mysql, m_connPool);
+            request->process();
         }
     }
 }

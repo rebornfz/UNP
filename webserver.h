@@ -64,7 +64,7 @@ public:
     string m_passWord;     //登陆数据库密码
     string m_databaseName; //使用数据库名
     int m_sql_num;
-    int m_SQLVerify;
+    //int m_SQLVerify;
 
     //线程池相关
     threadpool<http_conn> *m_pool;
@@ -76,9 +76,12 @@ public:
     int m_listenfd;
     int m_OPT_LINGER;
     int m_TRIGMode;
+    int m_LISTENTrigmode;
+    int m_CONNTrigmode;
+
 
     //定时器相关
-    sort_timer_lst timer_lst;
+    //sort_timer_lst timer_lst;
     client_data *users_timer;
     Utils utils;
 };

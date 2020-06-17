@@ -25,12 +25,16 @@ void http_conn::initmysql_result(connection_pool *connPool)
     {
         LOG_ERROR("SELECT error:%s\n",mysql_error(mysql));
     }
+
     //从表中检索完整的结果集
     MYSQL_RES *result = mysql_store_result(mysql);
+
     //返回结果集中的列数
     int num_fields = mysql_num_fields(result);
+
     //返回所有字段结构的数组
     MYSQL_FIELD *fields = mysql_fetch_fields(result);
+
     while(MYSQL_ROW row = mysql_fetch_row(result))
     {
         string temp1(row[0]);
@@ -39,40 +43,7 @@ void http_conn::initmysql_result(connection_pool *connPool)
     }
 }//初始化mysql连接池，把用户名，密码存入map中
 
-/*void http_conn::initresultFile(connection_pool *connPool)
-{
-    ofstream out("./CGImysql/id_passwd.txt");
-    //先从连接池中取一个连接
-    MYSQL *mysql = NULL;
-    connectionRAII mysqlcon(&mysql, connPool);
-
-    //在user表中检索username，passwd数据，浏览器端输入
-    if (mysql_query(mysql, "SELECT username,passwd FROM user"))
-    {
-        LOG_ERROR("SELECT error:%s\n", mysql_error(mysql));
-    }
-
-    //从表中检索完整的结果集
-    MYSQL_RES *result = mysql_store_result(mysql);
-
-    //返回结果集中的列数
-    int num_fields = mysql_num_fields(result);
-
-    //返回所有字段结构的数组
-    MYSQL_FIELD *fields = mysql_fetch_fields(result);
-
-    //从结果集中获取下一行，将对应的用户名和密码，存入map中
-    while (MYSQL_ROW row = mysql_fetch_row(result))
-    {
-        string temp1(row[0]);
-        string temp2(row[1]);
-        out << temp1 << " " << temp2 << endl;
-        users[temp1] = temp2;
-    }
-
-    out.close();
-}//把用户名密码存在文件里
-*/
+//非阻塞
 int setnonblocking(int fd)
 {
     int old_option = fcntl(fd, F_GETFL);//取得fd的文件状态标志
@@ -156,7 +127,7 @@ void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int SQLVer
 
     //当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
     doc_root = root;
-    m_SQLVerify = SQLVerify;
+    //m_SQLVerify = SQLVerify;
     m_close_log = close_log;
     m_TRIGMode = TRIGMode;
 
@@ -206,7 +177,7 @@ http_conn::LINE_STATUS http_conn::parse_line()
         if(temp == '\r')
         {
             if(m_read_idx == (m_checked_idx + 1));
-            {////若为回车符：若此回车符是已读取数据的最后一个则仍需要解析改行(即该行数据还没有接收完整)  
+            {////若为回车符：若此回车符是已读取数据的最后一个则仍需要解析该行(即该行数据还没有接收完整)  
                 return LINE_OPEN;
             }
             else if(m_read_buf[m_checked_idx + 1] == '\n')
@@ -292,7 +263,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
     {
         return BAD_REQUEST;
     }
-    *m_url = '\0';
+    *m_url++ = '\0';
     char *method = text;
     //strncasecmp用来比较参数s1和s2字符串前n个字符，比较时会自动忽略大小写的差异。
     if(strcasecmp(method, "GET") == 0) m_method = GET;
@@ -436,15 +407,17 @@ http_conn::HTTP_CODE http_conn::do_request()
     int len = strlen(doc_root);
     //查找最后一次出现的位置
     const char *p = strrchr(m_url, '/');
-    if(cgi == 1 && (*(p + 1) == '2') || *(p + 1) == '3');
+    if (cgi == 1 && (*(p + 1) == '2' || *(p + 1) == '3'))
     {
+
         //根据标志判断是登录检测还是注册检测
         char flag = m_url[1];
-        char *m_url_real = (char*)malloc(sizeof(char) * 200);
+
+        char *m_url_real = (char *)malloc(sizeof(char) * 200);
         strcpy(m_url_real, "/");
         strcat(m_url_real, m_url + 2);
         strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
-        free m_url_real;
+        free(m_url_real);
 
         //将用户名和密码提取出来
         //user=123&passwd=123
@@ -459,200 +432,43 @@ http_conn::HTTP_CODE http_conn::do_request()
             password[j] = m_string[i];
         password[j] = '\0';
 
-        if(m_SQLVerify == 0)
+        if (*(p + 1) == '3')
         {
-            if(*(p + 1) == '3')
+            //如果是注册，先检测数据库中是否有重名的
+            //没有重名的，进行增加数据
+            char *sql_insert = (char *)malloc(sizeof(char) * 200);
+            strcpy(sql_insert, "INSERT INTO user(username, passwd) VALUES(");
+            strcat(sql_insert, "'");
+            strcat(sql_insert, name);
+            strcat(sql_insert, "', '");
+            strcat(sql_insert, password);
+            strcat(sql_insert, "')");
+
+            if (users.find(name) == users.end())
             {
-                //如果是注册，先检测数据库中是否有重名的
-                //没有重名的，进行增加数据
-                char *sql_insert = (char *)malloc(sizeof(char) * 200);
-                strcpy(sql_insert, "INSERT INTO user(username, passwd) VALUES(");
-                strcat(sql_insert, "'");
-                strcat(sql_insert, name);
-                strcat(sql_insert, "', '");
-                strcat(sql_insert, password);
-                strcat(sql_insert, "')");
+                m_lock.lock();
+                int res = mysql_query(mysql, sql_insert);
+                users.insert(pair<string, string>(name, password));
+                m_lock.unlock();
 
-                if(users.find(name) == users.end())
-                {
-                    m_lock.lock();
-                    int res = mysql_query(mysql, sql_insert);
-                    users.insert(pair<string, string>(name, password));
-                    m_lock.unlock();
-
-                    if(!res)
-                        strcpy(m_url, "/log.html");
-                    else
-                    {
-                        strcpy(m_url, "/registerError.html");
-                    }
-                }
-                else
-                {
-                    strcpy(m_url, "registerError.html");
-                }
-            }
-            //如果是登录，直接判断
-            //若浏览器端输入的用户名和密码在表中可以查找到，返回1，否则返回0
-            else if (*(p + 1) == '2')
-            {
-                if (users.find(name) != users.end() && users[name] == password)
-                    strcpy(m_url, "/welcome.html");
-                else
-                    strcpy(m_url, "/logError.html");
-            }
-        }
-        /*else if(m_SQLVerify == 1)//CGI校验，使用连接池
-        {
-            //注册
-            if (*(p + 1) == '3')
-            {
-                //如果是注册，先检测数据库中是否有重名的
-                //没有重名的，进行增加数据
-                char *sql_insert = (char *)malloc(sizeof(char) * 200);
-                strcpy(sql_insert, "INSERT INTO user(username, passwd) VALUES(");
-                strcat(sql_insert, "'");
-                strcat(sql_insert, name);
-                strcat(sql_insert, "', '");
-                strcat(sql_insert, password);
-                strcat(sql_insert, "')");
-
-                if (users.find(name) == users.end())
-                {
-                    m_lock.lock();
-                    int res = mysql_query(mysql, sql_insert);
-                    users.insert(pair<string, string>(name, password));
-                    m_lock.unlock();
-
-                    if (!res)
-                    {
-                        strcpy(m_url, "/log.html");
-                        m_lock.lock();
-                        //每次都需要重新更新id_passwd.txt
-                        ofstream out("./CGImysql/id_passwd.txt", ios::app);
-                        out << name << " " << password << endl;
-                        out.close();
-                        m_lock.unlock();
-                    }
-                    else
-                        strcpy(m_url, "/registerError.html");
-                }
+                if (!res)
+                    strcpy(m_url, "/log.html");
                 else
                     strcpy(m_url, "/registerError.html");
             }
-            else if(*(p + 1) == '2')
-            {
-
-                pid_t pid;
-                //fd[0]:读管道，fd[1]:写管道。
-                int pipefd[2];
-                if(pipe(pipefd) < 0)
-                {
-                    LOG_ERROR("pipe() error:%d", 4);
-                    return BAD_REQUEST;
-                }
-                if ((pid = fork()) < 0)
-                {
-                    LOG_ERROR("fork() error:%d", 3);
-                    return BAD_REQUEST;
-                }
-                if(pid == 0)
-                {
-                    dup2(pipefd[1], 1);
-                    close(pipefd[0]);
-                    //父进程去执行cgi程序，m_real_file,name,password为输入
-                    //execl()用来执行参数path字符串所代表的文件路径，接下来的参数代表执行该文件时传递过去的argv(0)、argv[1]……，最后一个参数必须用空指针(NULL)作结束。
-                    execl(m_real_file, name, password, "./CGImysql/id_passwd.txt", "1", NULL);
-                }
-                else
-                {
-                    //子进程关闭写端，打开读端，读取父进程的输出
-                    close(pipefd[1]);
-                    char result;
-                    int ret = read(pipefd[0], &result, 1);
-                    if(ret != 1)
-                    {
-                        LOG_ERROR("管道read error:ret=%d", ret);
-                        return BAD_REQUEST;
-                    }
-                    LOG_INFO("%s", "登录检测");
-                    //当用户名和密码正确，则显示welcome界面，否则显示错误界面
-                    if (result == '1')
-                        strcpy(m_url, "/welcome.html");
-                    else
-                        strcpy(m_url, "/logError.html");
-
-                    //回收进程资源
-                    waitpid(pid, NULL, 0);
-                }
-            }
-        }
-        //CGI多进程登录校验,不用数据库连接池
-        //子进程完成注册和登录
-        else
-        {
-            pid_t pid;
-            int pipefd[2];
-            if (pipe(pipefd) < 0)
-            {
-                LOG_ERROR("pipe() error:%d", 4);
-                return BAD_REQUEST;
-            }
-            if ((pid = fork()) < 0)
-            {
-                LOG_ERROR("fork() error:%d", 3);
-                return BAD_REQUEST;
-            }
-            if (pid == 0)
-            {
-                //标准输出，文件描述符是1，然后将输出重定向到管道写端
-                dup2(pipefd[1], 1);
-
-                //关闭管道的读端
-                close(pipefd[0]);
-
-                //父进程去执行cgi程序
-                execl(m_real_file, &flag, name, password, "2", sql_user, sql_passwd, sql_name, NULL);
-            }
             else
-            {
-                //子进程关闭写端，打开读端，读取父进程的输出
-                close(pipefd[1]);
-                char result;
-                int ret = read(pipefd[0], &result, 1);
-
-                if (ret != 1)
-                {
-                    LOG_ERROR("管道read error:ret=%d", ret);
-                    return BAD_REQUEST;
-                }
-                if (flag == '2')
-                {
-                    LOG_INFO("%s", "登录检测");
-
-
-                    //当用户名和密码正确，则显示welcome界面，否则显示错误界面
-                    if (result == '1')
-                        strcpy(m_url, "/welcome.html");
-                    else
-                        strcpy(m_url, "/logError.html");
-                }
-                else if (flag == '3')
-                {
-                    LOG_INFO("%s", "注册检测");
-
-                    //当成功注册后，则显示登陆界面，否则显示错误界面
-                    if (result == '1')
-                        strcpy(m_url, "/log.html");
-                    else
-                        strcpy(m_url, "/registerError.html");
-                }
-                //回收进程资源
-                waitpid(pid, NULL, 0);
-
+                strcpy(m_url, "/registerError.html");
         }
-        
-    }*/
+        //如果是登录，直接判断
+        //若浏览器端输入的用户名和密码在表中可以查找到，返回1，否则返回0
+        else if (*(p + 1) == '2')
+        {
+            if (users.find(name) != users.end() && users[name] == password)
+                strcpy(m_url, "/welcome.html");
+            else
+                strcpy(m_url, "/logError.html");
+        }
+    }
     if (*(p + 1) == '0')
     {
         char *m_url_real = (char *)malloc(sizeof(char) * 200);

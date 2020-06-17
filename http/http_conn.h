@@ -22,7 +22,7 @@
 #include <map>
 
 #include "../lock/locker.h"
-#include "../CGImysql/sql_connection_pool.h"
+#include "../mysql/sql_connection_pool.h"
 #include "../timer/lst_timer.h"
 #include "../log/log.h"
 
@@ -129,9 +129,9 @@ private:
     bool m_linger;
     char *m_file_address;
     struct stat m_file_stat;
-    struct iovec m_iv[2];
+    struct iovec m_iv[2];//I/O vector，与readv和wirtev操作相关的结构体。
     int m_iv_count;
-    int cgi;//是否启用的POST
+    int cgi;//是否启用POST
     char *m_string;//存储请求头数据
     int bytes_to_send;
     int bytes_have_send;
@@ -146,3 +146,5 @@ private:
     char sql_passwd[100];
     char sql_name[100];
 }
+
+#endif

@@ -176,7 +176,7 @@ http_conn::LINE_STATUS http_conn::parse_line()
         temp = m_read_buf[m_checked_idx];
         if(temp == '\r')
         {
-            if(m_read_idx == (m_checked_idx + 1));
+            if(m_read_idx == (m_checked_idx + 1))
             {////若为回车符：若此回车符是已读取数据的最后一个则仍需要解析该行(即该行数据还没有接收完整)  
                 return LINE_OPEN;
             }

@@ -127,9 +127,8 @@ void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int TRIGMo
 
     //当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
     doc_root = root;
-    //m_SQLVerify = SQLVerify;
-    m_close_log = close_log;
     m_TRIGMode = TRIGMode;
+    m_close_log = close_log;
 
     strcpy(sql_user, user.c_str());
     strcpy(sql_passwd, passwd.c_str());
@@ -348,7 +347,7 @@ http_conn::HTTP_CODE http_conn::parse_headers(char *text)
 //判断http请求是否被完整读入
 http_conn::HTTP_CODE http_conn::parse_content(char *text)
 {
-    if(m_read_idx >= (m_content_length + m_check_idx))
+    if(m_read_idx >= (m_content_length + m_checked_idx))
     {
         text[m_content_length] = '\0';
         //POST请求中最后为输入的用户名和密码
@@ -389,7 +388,7 @@ http_conn::HTTP_CODE http_conn::process_read()
         }
         case CHECK_STATE_CONTENT:
         {
-            ret = pares_content(text);
+            ret = parse_content(text);
             if(ret == GET_REQUEST) return do_request();
             line_status = LINE_OPEN;
             break;

@@ -66,7 +66,7 @@ public:
     Utils() {}
     ~Utils() {}
 
-    void init(sort_timer_lst timer_lst, int timeslot);
+    void init(int timeslot);
 
     int setnonblocking(int fd);
     //将内核事件表注册读事件，ET模式，选择开启EPOLLONESHOT

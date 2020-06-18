@@ -26,4 +26,4 @@ Linux下C++轻量级Web服务器
 致谢
 ------------
 Linux高性能服务器编程，游双著.  
-我模仿的项目TinyWebServer(https://github.com/qinguoyi/TinyWebServer.git)
+我模仿的项目[TinyWebServer](https://github.com/qinguoyi/TinyWebServer.git)
